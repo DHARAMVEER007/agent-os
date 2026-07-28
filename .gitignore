@@ -1,0 +1,51 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# macOS and Windows
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# AI tooling local state
+.serena/
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
+
+# Node / React
+node_modules/
+dist/
+build/
+.vite/
+coverage/
+.pnpm-store/
+
+# Tauri / Rust
+target/
+desktop/src-tauri/target/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Local databases
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
