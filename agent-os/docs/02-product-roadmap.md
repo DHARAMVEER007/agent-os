@@ -252,29 +252,29 @@ agent-os/
 
 ### Floating Widget
 
-- [ ] Create the compact agent icon window
-- [ ] Position it in the bottom-right safe area
-- [ ] Make it frameless and visually lightweight
-- [ ] Keep it always on top without stealing focus unnecessarily
-- [ ] Add an unread badge with support for multi-digit counts
-- [ ] Make the widget draggable if enabled in settings
-- [ ] Save and restore widget position
+- [x] Create the compact agent icon window
+- [x] Position it in the bottom-right safe area
+- [x] Make it frameless and visually lightweight
+- [x] Keep it always on top without stealing focus unnecessarily
+- [x] Add an unread badge with support for multi-digit counts
+- [ ] Make the widget draggable if enabled in settings — dragging works, the setting does not exist yet
+- [x] Save and restore widget position
 
 ### Expanded Panel
 
-- [ ] Expand from the widget into an approximately 400 × 700 panel
-- [ ] Keep the panel anchored to the selected screen corner
-- [ ] Add notification, conversation, search, actions, and settings views
+- [x] Expand from the widget into an approximately 400 × 700 panel
+- [x] Keep the panel anchored to the selected screen corner
+- [ ] Add notification, conversation, search, actions, and settings views — notifications only so far
 - [ ] Collapse on outside click
-- [ ] Collapse when `Esc` is pressed
+- [x] Collapse when `Esc` is pressed
 - [ ] Return focus appropriately after collapse
 - [ ] Add keyboard navigation and accessible labels
 - [ ] Add responsive behavior for small screens and display scaling
 
 ### Native Desktop Behavior
 
-- [ ] Add a system tray/menu-bar entry
-- [ ] Add show, hide, settings, and quit actions
+- [x] Add a system tray/menu-bar entry
+- [ ] Add show, hide, settings, and quit actions — show and quit only
 - [ ] Handle multiple monitors
 - [ ] Keep windows inside the usable screen area
 - [ ] Handle resolution, scaling, dock, and taskbar changes
@@ -291,8 +291,8 @@ agent-os/
 ### Deliverables
 
 - [ ] Polished floating widget
-- [ ] Expandable mobile-sized panel
-- [ ] Mock notification list and badge
+- [x] Expandable mobile-sized panel
+- [x] Mock notification list and badge
 - [ ] System tray/menu-bar controls
 - [ ] Cross-platform UI verification notes
 

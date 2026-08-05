@@ -46,6 +46,14 @@ tests, the frontend build, and the native Tauri build.
 Keep provider credentials, email/AI calls, domain persistence, and workflow
 decisions out of React and Rust.
 
+## Notification list behavior
+
+The expanded panel shows what still needs attention, so reading a notification
+takes it out of the list and `Mark all read` empties the list entirely. Nothing
+is discarded: a footer control opens a read-only view of the notifications that
+have already been read, which is where a durable, searchable history will go
+once the Python service owns notification state.
+
 ## Transparent macOS window
 
 The collapsed robot widget uses a transparent native window. Tauri requires
