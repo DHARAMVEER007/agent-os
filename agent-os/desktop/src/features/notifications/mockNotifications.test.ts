@@ -6,8 +6,10 @@ import {
   markAllRead,
   markRead,
   mockNotifications,
+  requiresReplyApproval,
   selectRead,
   selectUnread,
+  updateReplyDraft,
 } from "./mockNotifications";
 
 // Edge categories for the notification helpers:
@@ -26,6 +28,7 @@ function notification(id: number, isRead: boolean): AgentNotification {
     id,
     source: "Email",
     severity: "normal",
+    action: "none",
     title: `Message ${id}`,
     detail: "Detail",
     time: "Now",
@@ -125,5 +128,42 @@ describe("markAllRead", () => {
 
   it("handles an empty list", () => {
     expect(markAllRead([])).toEqual([]);
+  });
+});
+
+describe("requiresReplyApproval", () => {
+  it("[critical] is true only for reply-ready items with a draft", () => {
+    const replyReady = mockNotifications.find(
+      (notification) => notification.id === 1,
+    );
+    const invoice = mockNotifications.find(
+      (notification) => notification.id === 2,
+    );
+
+    expect(replyReady && requiresReplyApproval(replyReady)).toBe(true);
+    expect(invoice && requiresReplyApproval(invoice)).toBe(false);
+  });
+});
+
+describe("updateReplyDraft", () => {
+  it("updates subject and body without marking the item read", () => {
+    const result = updateReplyDraft(mockNotifications, 1, {
+      subject: "Re: Updated plan",
+      draftBody: "Edited draft",
+    });
+    const updated = result.find((notification) => notification.id === 1);
+
+    expect(updated?.isRead).toBe(false);
+    expect(updated?.replyDraft?.subject).toBe("Re: Updated plan");
+    expect(updated?.replyDraft?.draftBody).toBe("Edited draft");
+  });
+
+  it("leaves other notifications untouched when the id is unknown", () => {
+    expect(
+      updateReplyDraft(mockNotifications, 999, {
+        subject: "Nope",
+        draftBody: "Nope",
+      }),
+    ).toEqual(mockNotifications);
   });
 });
