@@ -80,7 +80,7 @@ describe("App", () => {
     expect(screen.getByText(`${unreadCount} new`)).toBeInTheDocument();
   });
 
-  it("[critical] removes a notification from the list once it is read", async () => {
+  it("[critical] opens reply approval instead of dismissing the card", async () => {
     render(<App />);
 
     openPanel();
@@ -91,7 +91,100 @@ describe("App", () => {
     );
 
     expect(
-      screen.queryByText("Reply ready for review"),
+      await screen.findByRole("heading", {
+        name: "I am going to send this reply",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("maya@company.com")).toBeInTheDocument();
+    expect(screen.getByText(/Thursday works on my side/)).toBeInTheDocument();
+    expect(screen.queryByText(`${unreadCount} new`)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Yes, send" }),
+    ).toBeInTheDocument();
+  });
+
+  it("[critical] returns unread when Back is pressed from approval", async () => {
+    render(<App />);
+
+    openPanel();
+    await screen.findByRole("main", { name: panelName });
+    fireEvent.click(
+      screen.getByRole("button", { name: /Reply ready for review/ }),
+    );
+    await screen.findByRole("heading", {
+      name: "I am going to send this reply",
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+
+    expect(
+      await screen.findByRole("button", { name: /Reply ready for review/ }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(`${unreadCount} new`)).toBeInTheDocument();
+  });
+
+  it("[critical] removes the reply after Yes, send", async () => {
+    render(<App />);
+
+    openPanel();
+    await screen.findByRole("main", { name: panelName });
+    fireEvent.click(
+      screen.getByRole("button", { name: /Reply ready for review/ }),
+    );
+    await screen.findByRole("heading", {
+      name: "I am going to send this reply",
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Yes, send" }));
+
+    expect(
+      await screen.findByText(`${unreadCount - 1} new`),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Reply ready for review/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("lets the user edit the draft before confirming", async () => {
+    render(<App />);
+
+    openPanel();
+    await screen.findByRole("main", { name: panelName });
+    fireEvent.click(
+      screen.getByRole("button", { name: /Reply ready for review/ }),
+    );
+    await screen.findByRole("heading", {
+      name: "I am going to send this reply",
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit reply" }));
+    fireEvent.change(screen.getByLabelText("Reply subject"), {
+      target: { value: "Re: Revised demo plan" },
+    });
+    fireEvent.change(screen.getByLabelText("Reply body"), {
+      target: { value: "Updated draft body" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save and review" }));
+
+    expect(screen.getByText("Re: Revised demo plan")).toBeInTheDocument();
+    expect(screen.getByText("Updated draft body")).toBeInTheDocument();
+    expect(
+      screen.getByText("Draft updated. Confirm before sending."),
+    ).toBeInTheDocument();
+  });
+
+  it("[critical] removes an info notification from the list once it is read", async () => {
+    render(<App />);
+
+    openPanel();
+    await screen.findByRole("main", { name: panelName });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Invoice needs approval/ }),
+    );
+
+    expect(
+      screen.queryByText("Invoice needs approval"),
     ).not.toBeInTheDocument();
     expect(screen.getAllByRole("listitem")).toHaveLength(unreadCount - 1);
     expect(screen.getByText(`${unreadCount - 1} new`)).toBeInTheDocument();
@@ -104,7 +197,6 @@ describe("App", () => {
       }),
     ).toBeInTheDocument();
   });
-
   it("[critical] empties the list and clears the badge when everything is read", async () => {
     render(<App />);
 
@@ -184,5 +276,59 @@ describe("App", () => {
     });
 
     expect(startDragging).toHaveBeenCalledOnce();
+  });
+
+  it("[critical] opens Settings with account cards and connects Outlook", async () => {
+    render(<App />);
+
+    openPanel();
+    await screen.findByRole("main", { name: panelName });
+
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "Settings" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Microsoft Outlook")).toBeInTheDocument();
+    expect(screen.getByText("Microsoft Teams")).toBeInTheDocument();
+    expect(screen.getAllByText("Coming soon").length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("button", { name: "Connect" }));
+
+    expect(screen.getByText("Connected")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Signed in as you@company.com/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Disconnect" }),
+    ).toBeInTheDocument();
+  });
+
+  it("toggles a notification preference from Settings", async () => {
+    render(<App />);
+
+    openPanel();
+    await screen.findByRole("main", { name: panelName });
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+
+    const quietHours = await screen.findByRole("switch", {
+      name: "Quiet hours",
+    });
+
+    expect(quietHours).not.toBeChecked();
+    fireEvent.click(quietHours);
+    expect(quietHours).toBeChecked();
+  });
+
+  it("shows the Ask stub when that tab is selected", async () => {
+    render(<App />);
+
+    openPanel();
+    await screen.findByRole("main", { name: panelName });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+
+    expect(
+      await screen.findByRole("heading", { name: `Ask ${agentName}` }),
+    ).toBeInTheDocument();
   });
 });
