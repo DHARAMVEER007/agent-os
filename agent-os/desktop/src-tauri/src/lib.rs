@@ -1,4 +1,5 @@
 mod platform;
+mod sidecar;
 mod tray;
 mod windows;
 
@@ -6,6 +7,7 @@ use std::sync::{Mutex, MutexGuard, PoisonError};
 
 use tauri::{AppHandle, Manager, RunEvent, State, WebviewWindow, WindowEvent};
 
+use crate::sidecar::{RuntimeConnection, SidecarHandle};
 use crate::windows::{store, WidgetLayout};
 
 /// A poisoned lock only means an earlier window operation panicked. The
@@ -37,20 +39,31 @@ fn show_existing_instance(app: &AppHandle) {
     }
 }
 
+fn stop_sidecar(app: &AppHandle) {
+    if let Some(sidecar) = app.try_state::<SidecarHandle>() {
+        sidecar.shutdown();
+    }
+}
+
 #[derive(serde::Serialize)]
 struct RuntimeStatus {
     application: &'static str,
     native_shell: &'static str,
-    background_service: &'static str,
+    background_service: String,
 }
 
 #[tauri::command]
-fn get_runtime_status() -> RuntimeStatus {
+fn get_runtime_status(sidecar: State<'_, SidecarHandle>) -> RuntimeStatus {
     RuntimeStatus {
         application: "Ready",
         native_shell: "Tauri connected",
-        background_service: "Planned",
+        background_service: sidecar.background_status(),
     }
+}
+
+#[tauri::command]
+fn get_runtime_connection(sidecar: State<'_, SidecarHandle>) -> RuntimeConnection {
+    sidecar.connection()
 }
 
 #[tauri::command]
@@ -90,6 +103,7 @@ pub fn run() {
             app.manage(Mutex::new(WidgetLayout::with_collapsed_position(
                 saved_position,
             )));
+            app.manage(sidecar::start_managed(app.handle()));
 
             let window = app
                 .get_webview_window("main")
@@ -109,6 +123,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             get_runtime_status,
+            get_runtime_connection,
             set_widget_expanded
         ])
         .build(tauri::generate_context!())
@@ -118,6 +133,7 @@ pub fn run() {
     // written when the session ends rather than on every frame of the drag.
     app.run(|app, event| {
         if let RunEvent::Exit = event {
+            stop_sidecar(app);
             save_widget_position(app);
         }
     });

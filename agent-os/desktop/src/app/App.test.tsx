@@ -44,7 +44,22 @@ describe("App", () => {
       configurable: true,
       value: {},
     });
-    invoke.mockClear();
+    invoke.mockReset();
+    invoke.mockImplementation(async (command: string) => {
+      if (command === "get_runtime_status") {
+        return {
+          application: "Ready",
+          native_shell: "Tauri connected",
+          background_service: "Ready",
+        };
+      }
+
+      if (command === "get_runtime_connection") {
+        return { baseUrl: "", ready: false, token: null };
+      }
+
+      return undefined;
+    });
     listen.mockReset();
     listen.mockResolvedValue(() => {});
     onFocusChanged.mockReset();
@@ -375,6 +390,20 @@ describe("App", () => {
     expect(quietHours).not.toBeChecked();
     fireEvent.click(quietHours);
     expect(quietHours).toBeChecked();
+  });
+
+  it("shows runtime status in Settings About", async () => {
+    render(<App />);
+    openPanel();
+    await screen.findByRole("main", { name: panelName });
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "Runtime status" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Background service")).toBeInTheDocument();
+    expect(screen.getByText("Native shell")).toBeInTheDocument();
+    expect(screen.getByText("Tauri connected")).toBeInTheDocument();
   });
 
   it("shows the Ask stub when that tab is selected", async () => {

@@ -911,6 +911,53 @@ button {
   font-weight: 700;
 }
 
+.runtime-card {
+  margin-top: 10px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--card);
+  box-shadow: 0 7px 22px rgb(29 70 56 / 6%);
+}
+
+.runtime-card__heading {
+  margin-bottom: 12px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.runtime-card__heading h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.runtime-list {
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.runtime-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.runtime-list dt {
+  font-weight: 600;
+}
+
+.runtime-list dd {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 700;
+  text-align: right;
+}
+
 .panel-nav {
   margin: 12px 14px 14px;
   padding: 7px;
