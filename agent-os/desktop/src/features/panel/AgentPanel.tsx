@@ -1,5 +1,5 @@
-import { useState } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
+import { useState } from "react";
 
 import {
   BellIcon,
@@ -33,6 +33,7 @@ import type {
 export type PanelTab = "activity" | "ask" | "settings";
 
 interface AgentPanelProps {
+  activeTab: PanelTab;
   agentName: string;
   connectedAccounts: Partial<Record<AccountId, ConnectedAccount>>;
   desktopPreferences: DesktopPreferences;
@@ -49,11 +50,13 @@ interface AgentPanelProps {
     id: number,
     draft: Pick<ReplyDraft, "subject" | "draftBody">,
   ) => void;
+  onTabChange: (tab: PanelTab) => void;
   productVersion: string;
   unreadCount: number;
 }
 
 export function AgentPanel({
+  activeTab,
   agentName,
   connectedAccounts,
   desktopPreferences,
@@ -67,10 +70,10 @@ export function AgentPanel({
   onMarkRead,
   onNotificationChange,
   onSaveReplyDraft,
+  onTabChange,
   productVersion,
   unreadCount,
 }: AgentPanelProps) {
-  const [activeTab, setActiveTab] = useState<PanelTab>("activity");
   const [isShowingRead, setIsShowingRead] = useState(false);
   const [approvalId, setApprovalId] = useState<number | null>(null);
 
@@ -302,7 +305,7 @@ export function AgentPanel({
           className={
             activeTab === "activity" ? "nav-item nav-item--active" : "nav-item"
           }
-          onClick={() => setActiveTab("activity")}
+          onClick={() => onTabChange("activity")}
           type="button"
         >
           <GridIcon className="glyph" />
@@ -313,7 +316,7 @@ export function AgentPanel({
           className={
             activeTab === "ask" ? "nav-item nav-item--active" : "nav-item"
           }
-          onClick={() => setActiveTab("ask")}
+          onClick={() => onTabChange("ask")}
           type="button"
         >
           <SparkleIcon className="glyph" />
@@ -324,7 +327,7 @@ export function AgentPanel({
           className={
             activeTab === "settings" ? "nav-item nav-item--active" : "nav-item"
           }
-          onClick={() => setActiveTab("settings")}
+          onClick={() => onTabChange("settings")}
           type="button"
         >
           <GearIcon className="glyph" />

@@ -664,6 +664,56 @@ button {
   display: flex;
   flex: 1;
   flex-direction: column;
+  position: relative;
+}
+
+.consent-sheet {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-items: end center;
+  padding: 14px;
+  background: rgb(18 44 35 / 42%);
+}
+
+.consent-sheet__card {
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: 0 16px 40px rgb(18 44 35 / 22%);
+}
+
+.consent-sheet__card h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.consent-sheet__copy,
+.consent-sheet__note {
+  margin: 0 0 10px;
+  color: #4b5a55;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.consent-sheet__permissions {
+  margin: 0 0 12px;
+  padding-left: 18px;
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.consent-sheet__note {
+  color: var(--muted);
+}
+
+.consent-sheet__actions {
+  display: grid;
+  gap: 8px;
 }
 
 .settings-scroll {
