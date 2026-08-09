@@ -21,7 +21,7 @@ export function RuntimeStatusCard({
     <section className="runtime-card" aria-labelledby="runtime-title">
       <div className="runtime-card__heading">
         <div>
-          <p className="eyebrow">System boundary</p>
+          <p className="panel-eyebrow">System boundary</p>
           <h3 id="runtime-title">Runtime status</h3>
         </div>
         <button
@@ -35,12 +35,14 @@ export function RuntimeStatusCard({
       </div>
 
       <dl className="runtime-list">
-        {(Object.keys(status) as Array<keyof RuntimeStatus>).map((key) => (
-          <div key={key}>
-            <dt>{statusLabels[key]}</dt>
-            <dd>{status[key]}</dd>
-          </div>
-        ))}
+        {(Object.keys(statusLabels) as Array<keyof RuntimeStatus>).map(
+          (key) => (
+            <div key={key}>
+              <dt>{statusLabels[key]}</dt>
+              <dd>{status[key]}</dd>
+            </div>
+          ),
+        )}
       </dl>
     </section>
   );

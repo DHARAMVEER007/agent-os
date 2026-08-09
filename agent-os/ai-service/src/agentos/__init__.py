@@ -1,2 +1,3 @@
-def hello() -> str:
-    return "Hello from agentos!"
+"""AgentOS background service package."""
+
+__version__ = "0.1.0"

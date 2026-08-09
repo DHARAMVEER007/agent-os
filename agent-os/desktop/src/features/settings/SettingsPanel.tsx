@@ -1,6 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ChangeEvent } from "react";
 
+import { RuntimeStatusCard } from "../runtime/RuntimeStatusCard";
+import {
+  getRuntimeStatus,
+  initialRuntimeStatus,
+} from "../../lib/tauri/runtime";
 import type {
   AccountDefinition,
   AccountId,
@@ -169,6 +174,31 @@ export function SettingsPanel({
   productVersion,
 }: SettingsPanelProps) {
   const [isConsentOpen, setIsConsentOpen] = useState(false);
+  const [runtimeStatus, setRuntimeStatus] = useState(initialRuntimeStatus);
+  const [isCheckingRuntime, setIsCheckingRuntime] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void getRuntimeStatus().then((status) => {
+      if (!cancelled) {
+        setRuntimeStatus(status);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function refreshRuntimeStatus() {
+    setIsCheckingRuntime(true);
+    try {
+      setRuntimeStatus(await getRuntimeStatus());
+    } finally {
+      setIsCheckingRuntime(false);
+    }
+  }
 
   function confirmOutlookConnect() {
     setIsConsentOpen(false);
@@ -312,6 +342,11 @@ export function SettingsPanel({
               </div>
             </dl>
           </div>
+          <RuntimeStatusCard
+            isChecking={isCheckingRuntime}
+            onRefresh={refreshRuntimeStatus}
+            status={runtimeStatus}
+          />
         </section>
       </div>
 
