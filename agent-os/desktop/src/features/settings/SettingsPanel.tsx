@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { ChangeEvent } from "react";
 
 import type {
@@ -111,6 +112,51 @@ function AccountCard({
   );
 }
 
+function OutlookConsentSheet({
+  agentName,
+  onCancel,
+  onContinue,
+}: {
+  agentName: string;
+  onCancel: () => void;
+  onContinue: () => void;
+}) {
+  return (
+    <div
+      aria-labelledby="outlook-consent-title"
+      aria-modal="true"
+      className="consent-sheet"
+      role="dialog"
+    >
+      <div className="consent-sheet__card">
+        <p className="panel-eyebrow">Microsoft Outlook</p>
+        <h3 id="outlook-consent-title">Connect your mailbox</h3>
+        <p className="consent-sheet__copy">
+          You’ll sign in with Microsoft. {agentName} never sees your password —
+          only access tokens stored in your system keychain.
+        </p>
+        <ul className="consent-sheet__permissions">
+          <li>Read new mail so drafts can be prepared</li>
+          <li>Send mail only after you tap Yes, send</li>
+          <li>Stay signed in while the companion is running</li>
+        </ul>
+        <p className="consent-sheet__note">
+          This build uses a mock connection. Real OAuth arrives with the
+          background service.
+        </p>
+        <div className="consent-sheet__actions">
+          <button className="primary-button" onClick={onContinue} type="button">
+            Continue with Microsoft
+          </button>
+          <button className="secondary-button" onClick={onCancel} type="button">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function SettingsPanel({
   agentName,
   connectedAccounts,
@@ -122,6 +168,13 @@ export function SettingsPanel({
   onNotificationChange,
   productVersion,
 }: SettingsPanelProps) {
+  const [isConsentOpen, setIsConsentOpen] = useState(false);
+
+  function confirmOutlookConnect() {
+    setIsConsentOpen(false);
+    onConnectOutlook();
+  }
+
   return (
     <div className="settings-panel">
       <section className="panel-intro" aria-labelledby="settings-title">
@@ -149,7 +202,7 @@ export function SettingsPanel({
                 account={account}
                 connected={connectedAccounts[account.id]}
                 key={account.id}
-                onConnect={onConnectOutlook}
+                onConnect={() => setIsConsentOpen(true)}
                 onDisconnect={onDisconnectOutlook}
               />
             ))}
@@ -261,6 +314,14 @@ export function SettingsPanel({
           </div>
         </section>
       </div>
+
+      {isConsentOpen && (
+        <OutlookConsentSheet
+          agentName={agentName}
+          onCancel={() => setIsConsentOpen(false)}
+          onContinue={confirmOutlookConnect}
+        />
+      )}
     </div>
   );
 }

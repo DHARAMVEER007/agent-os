@@ -30,6 +30,13 @@ fn save_widget_position(app: &AppHandle) {
     }
 }
 
+fn show_existing_instance(app: &AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = platform::show_floating_window(&window);
+        let _ = window.set_focus();
+    }
+}
+
 #[derive(serde::Serialize)]
 struct RuntimeStatus {
     application: &'static str,
@@ -71,6 +78,10 @@ fn set_widget_expanded(
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let app = tauri::Builder::default()
+        // Must be first so a second launch exits before other setup runs.
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            show_existing_instance(app);
+        }))
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);

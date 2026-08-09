@@ -8,6 +8,7 @@ import {
   updateReplyDraft,
 } from "../features/notifications/mockNotifications";
 import type { ReplyDraft } from "../features/notifications/mockNotifications";
+import type { PanelTab } from "../features/panel/AgentPanel";
 import { AgentPanel } from "../features/panel/AgentPanel";
 import {
   connectOutlook,
@@ -22,7 +23,11 @@ import type {
   NotificationPreferences,
 } from "../features/settings/settingsModel";
 import { FloatingWidget } from "../features/widget/FloatingWidget";
-import { setWidgetExpanded } from "../lib/tauri/widgetWindow";
+import {
+  onOpenSettingsRequest,
+  onWindowBlur,
+  setWidgetExpanded,
+} from "../lib/tauri/widgetWindow";
 
 /// The assistant the user talks to. AgentOS stays the name of the product and
 /// the application bundle.
@@ -31,6 +36,7 @@ const PRODUCT_VERSION = "0.1.0";
 
 export function App() {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState<PanelTab>("activity");
   const [notifications, setNotifications] = useState(mockNotifications);
   const [connectedAccounts, setConnectedAccounts] = useState(
     initialConnectedAccounts,
@@ -48,6 +54,12 @@ export function App() {
     setIsExpanded(expanded);
   }, []);
 
+  const openSettingsTab = useCallback(async () => {
+    await setWidgetExpanded(true);
+    setIsExpanded(true);
+    setActiveTab("settings");
+  }, []);
+
   useEffect(() => {
     if (!isExpanded) {
       return;
@@ -62,6 +74,52 @@ export function App() {
     window.addEventListener("keydown", collapseOnEscape);
     return () => window.removeEventListener("keydown", collapseOnEscape);
   }, [changeExpandedState, isExpanded]);
+
+  useEffect(() => {
+    if (!isExpanded) {
+      return;
+    }
+
+    let disposed = false;
+    let unsubscribe = () => {};
+
+    void onWindowBlur(() => {
+      void changeExpandedState(false);
+    }).then((stop) => {
+      if (disposed) {
+        stop();
+        return;
+      }
+
+      unsubscribe = stop;
+    });
+
+    return () => {
+      disposed = true;
+      unsubscribe();
+    };
+  }, [changeExpandedState, isExpanded]);
+
+  useEffect(() => {
+    let disposed = false;
+    let unsubscribe = () => {};
+
+    void onOpenSettingsRequest(() => {
+      void openSettingsTab();
+    }).then((stop) => {
+      if (disposed) {
+        stop();
+        return;
+      }
+
+      unsubscribe = stop;
+    });
+
+    return () => {
+      disposed = true;
+      unsubscribe();
+    };
+  }, [openSettingsTab]);
 
   function handleConnectOutlook() {
     setConnectedAccounts((current) => ({
@@ -83,6 +141,7 @@ export function App() {
   if (isExpanded) {
     return (
       <AgentPanel
+        activeTab={activeTab}
         agentName={AGENT_NAME}
         connectedAccounts={connectedAccounts}
         desktopPreferences={desktopPreferences}
@@ -107,6 +166,7 @@ export function App() {
         ) =>
           setNotifications((current) => updateReplyDraft(current, id, draft))
         }
+        onTabChange={setActiveTab}
         productVersion={PRODUCT_VERSION}
         unreadCount={unreadCount}
       />

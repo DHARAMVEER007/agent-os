@@ -8,15 +8,19 @@ import {
 } from "../features/notifications/mockNotifications";
 import { App } from "./App";
 
-const { invoke, startDragging } = vi.hoisted(() => ({
+const { invoke, listen, onFocusChanged, startDragging } = vi.hoisted(() => ({
   invoke: vi.fn().mockResolvedValue(undefined),
+  listen: vi.fn().mockResolvedValue(() => {}),
+  onFocusChanged: vi.fn().mockResolvedValue(() => {}),
   startDragging: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke }));
 
+vi.mock("@tauri-apps/api/event", () => ({ listen }));
+
 vi.mock("@tauri-apps/api/window", () => ({
-  getCurrentWindow: () => ({ startDragging }),
+  getCurrentWindow: () => ({ onFocusChanged, startDragging }),
 }));
 
 const unreadCount = countUnread(mockNotifications);
@@ -41,6 +45,10 @@ describe("App", () => {
       value: {},
     });
     invoke.mockClear();
+    listen.mockReset();
+    listen.mockResolvedValue(() => {});
+    onFocusChanged.mockReset();
+    onFocusChanged.mockResolvedValue(() => {});
     startDragging.mockClear();
   });
 
@@ -295,6 +303,14 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Connect" }));
 
+    expect(
+      await screen.findByRole("heading", { name: "Connect your mailbox" }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continue with Microsoft" }),
+    );
+
     expect(screen.getByText("Connected")).toBeInTheDocument();
     expect(
       screen.getByText(/Signed in as you@company.com/),
@@ -302,6 +318,47 @@ describe("App", () => {
     expect(
       screen.getByRole("button", { name: "Disconnect" }),
     ).toBeInTheDocument();
+  });
+
+  it("opens Settings when the tray asks for it", async () => {
+    listen.mockImplementation(async (event: string, handler: () => void) => {
+      if (event === "open-settings") {
+        handler();
+      }
+
+      return () => {};
+    });
+
+    render(<App />);
+
+    expect(
+      await screen.findByRole("heading", { name: "Settings" }),
+    ).toBeInTheDocument();
+    expect(invoke).toHaveBeenCalledWith("set_widget_expanded", {
+      expanded: true,
+    });
+  });
+
+  it("collapses the panel when the window loses focus", async () => {
+    let focusHandler: ((event: { payload: boolean }) => void) | undefined;
+
+    onFocusChanged.mockImplementation(async (handler) => {
+      focusHandler = handler;
+      return () => {};
+    });
+
+    render(<App />);
+    openPanel();
+    await screen.findByRole("main", { name: panelName });
+
+    focusHandler?.({ payload: false });
+
+    expect(
+      await screen.findByRole("button", { name: openWidgetName }),
+    ).toBeInTheDocument();
+    expect(invoke).toHaveBeenCalledWith("set_widget_expanded", {
+      expanded: false,
+    });
   });
 
   it("toggles a notification preference from Settings", async () => {
