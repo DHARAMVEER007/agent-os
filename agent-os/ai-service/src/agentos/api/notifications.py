@@ -27,6 +27,10 @@ def _connection(request: Request):
     return request.app.state.db
 
 
+async def _publish(request: Request, event: dict[str, Any]) -> None:
+    await request.app.state.events.broadcast(event)
+
+
 @router.get("")
 def list_notifications(request: Request) -> dict[str, Any]:
     connection = _connection(request)
@@ -38,9 +42,17 @@ def list_notifications(request: Request) -> dict[str, Any]:
 
 
 @router.post("/read-all")
-def mark_all_notifications_read(request: Request) -> dict[str, Any]:
+async def mark_all_notifications_read(request: Request) -> dict[str, Any]:
     connection = _connection(request)
     updated = repo.mark_all_read(connection)
+    await _publish(
+        request,
+        {"type": "notification.updated", "scope": "all"},
+    )
+    await _publish(
+        request,
+        {"type": "unread_count.changed", "unreadCount": 0},
+    )
     return {
         "updated": updated,
         "unreadCount": 0,
@@ -48,7 +60,7 @@ def mark_all_notifications_read(request: Request) -> dict[str, Any]:
 
 
 @router.post("/{notification_id}/read")
-def mark_notification_read(
+async def mark_notification_read(
     notification_id: int,
     request: Request,
 ) -> dict[str, Any]:
@@ -58,15 +70,28 @@ def mark_notification_read(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Notification not found",
         )
+    unread = repo.count_unread(connection)
+    await _publish(
+        request,
+        {
+            "type": "notification.updated",
+            "notificationId": notification_id,
+            "isRead": True,
+        },
+    )
+    await _publish(
+        request,
+        {"type": "unread_count.changed", "unreadCount": unread},
+    )
     return {
         "id": notification_id,
         "isRead": True,
-        "unreadCount": repo.count_unread(connection),
+        "unreadCount": unread,
     }
 
 
 @router.put("/{notification_id}/reply-draft")
-def update_notification_reply_draft(
+async def update_notification_reply_draft(
     notification_id: int,
     body: ReplyDraftUpdate,
     request: Request,
@@ -85,4 +110,11 @@ def update_notification_reply_draft(
     items = {
         item["id"]: item for item in repo.list_notifications(connection)
     }
+    await _publish(
+        request,
+        {
+            "type": "notification.updated",
+            "notificationId": notification_id,
+        },
+    )
     return {"notification": items[notification_id]}

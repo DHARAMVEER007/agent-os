@@ -12,6 +12,7 @@ TOKEN = "test-session-token"
 def client(monkeypatch: pytest.MonkeyPatch, tmp_path):
     monkeypatch.setenv("AGENTOS_SESSION_TOKEN", TOKEN)
     monkeypatch.setenv("AGENTOS_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("AGENTOS_SIMULATE_INTERVAL_SECONDS", "0")
 
     # Import after env is set so lifespan uses the temp database.
     from agentos.api.app import app

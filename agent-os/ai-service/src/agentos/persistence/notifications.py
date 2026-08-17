@@ -260,3 +260,60 @@ def update_reply_draft(
     )
     connection.commit()
     return True
+
+
+def next_notification_id(connection: sqlite3.Connection) -> int:
+    row = connection.execute(
+        "SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM notifications"
+    ).fetchone()
+    return int(row["next_id"])
+
+
+def get_notification(
+    connection: sqlite3.Connection,
+    notification_id: int,
+) -> dict[str, Any] | None:
+    row = connection.execute(
+        """
+        SELECT id, source, severity, action, title, detail, time_label,
+               is_read, reply_draft_json
+        FROM notifications
+        WHERE id = ?
+        """,
+        (notification_id,),
+    ).fetchone()
+    if row is None:
+        return None
+    return _row_to_notification(row)
+
+
+def insert_simulated_notification(
+    connection: sqlite3.Connection,
+    sequence: int,
+) -> dict[str, Any]:
+    notification_id = next_notification_id(connection)
+    title = f"Simulated alert #{sequence}"
+    detail = "Background monitor produced a demo notification."
+    connection.execute(
+        """
+        INSERT INTO notifications (
+            id, source, severity, action, title, detail, time_label,
+            is_read, reply_draft_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            notification_id,
+            "System",
+            "normal",
+            "none",
+            title,
+            detail,
+            "Now",
+            0,
+            None,
+        ),
+    )
+    connection.commit()
+    created = get_notification(connection, notification_id)
+    assert created is not None
+    return created

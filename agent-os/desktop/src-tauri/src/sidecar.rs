@@ -162,6 +162,7 @@ fn spawn_and_wait_ready(app: &AppHandle) -> Result<SidecarState, IoError> {
         .env("AGENTOS_PORT", port.to_string())
         .env("AGENTOS_SESSION_TOKEN", &token)
         .env("AGENTOS_DATA_DIR", data_dir)
+        .env("AGENTOS_SIMULATE_INTERVAL_SECONDS", "30")
         .env("AGENTOS_LOG_LEVEL", "warning")
         .stdin(Stdio::null())
         .stdout(Stdio::null())
