@@ -2,20 +2,21 @@
 
 from __future__ import annotations
 
-import os
-
 import pytest
 from fastapi.testclient import TestClient
-
-from agentos.api.app import app
 
 TOKEN = "test-session-token"
 
 
 @pytest.fixture()
-def client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
+def client(monkeypatch: pytest.MonkeyPatch, tmp_path):
     monkeypatch.setenv("AGENTOS_SESSION_TOKEN", TOKEN)
-    return TestClient(app)
+    monkeypatch.setenv("AGENTOS_DATA_DIR", str(tmp_path))
+
+    from agentos.api.app import app
+
+    with TestClient(app) as test_client:
+        yield test_client
 
 
 def test_health_requires_bearer_token(client: TestClient) -> None:
@@ -46,8 +47,13 @@ def test_health_ok(client: TestClient) -> None:
 
 def test_health_fails_when_token_env_missing(
     monkeypatch: pytest.MonkeyPatch,
+    tmp_path,
 ) -> None:
+    monkeypatch.setenv("AGENTOS_DATA_DIR", str(tmp_path))
     monkeypatch.delenv("AGENTOS_SESSION_TOKEN", raising=False)
+
+    from agentos.api.app import app
+
     with TestClient(app) as bare_client:
         response = bare_client.get(
             "/health",

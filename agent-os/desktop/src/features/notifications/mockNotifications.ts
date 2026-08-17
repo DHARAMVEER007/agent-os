@@ -30,9 +30,8 @@ export interface AgentNotification {
   replyDraft?: ReplyDraft;
 }
 
-/// Stand-in data until the background service produces real events. The list is
-/// long enough to exercise scrolling and a two-digit unread badge, and includes
-/// already-read entries so the read view is never empty on a first look.
+/// Fallback sample data for browser preview and offline desktop mode. The
+/// Python sidecar SQLite store is the source of truth when the service is ready.
 export const mockNotifications: AgentNotification[] = [
   {
     id: 1,

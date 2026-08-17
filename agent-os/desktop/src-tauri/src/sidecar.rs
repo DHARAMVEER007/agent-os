@@ -149,12 +149,19 @@ fn spawn_and_wait_ready(app: &AppHandle) -> Result<SidecarState, IoError> {
     let port = reserve_loopback_port()?;
     let token = Uuid::new_v4().to_string();
 
+    let data_dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|error| IoError::other(format!("app data dir unavailable: {error}")))?;
+    std::fs::create_dir_all(&data_dir)?;
+
     let child = Command::new("uv")
         .args(["run", "python", "-m", "agentos"])
         .current_dir(&service_dir)
         .env("AGENTOS_HOST", "127.0.0.1")
         .env("AGENTOS_PORT", port.to_string())
         .env("AGENTOS_SESSION_TOKEN", &token)
+        .env("AGENTOS_DATA_DIR", data_dir)
         .env("AGENTOS_LOG_LEVEL", "warning")
         .stdin(Stdio::null())
         .stdout(Stdio::null())
