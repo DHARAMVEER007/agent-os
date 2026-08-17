@@ -7,7 +7,10 @@ import {
   mockNotifications,
   updateReplyDraft,
 } from "../features/notifications/mockNotifications";
-import type { ReplyDraft } from "../features/notifications/mockNotifications";
+import type {
+  AgentNotification,
+  ReplyDraft,
+} from "../features/notifications/mockNotifications";
 import type { PanelTab } from "../features/panel/AgentPanel";
 import { AgentPanel } from "../features/panel/AgentPanel";
 import {
@@ -24,6 +27,12 @@ import type {
 } from "../features/settings/settingsModel";
 import { FloatingWidget } from "../features/widget/FloatingWidget";
 import {
+  loadNotifications,
+  markAllNotificationsReadRemote,
+  markNotificationReadRemote,
+  saveReplyDraftRemote,
+} from "../lib/api/notifications";
+import {
   onOpenSettingsRequest,
   onWindowBlur,
   setWidgetExpanded,
@@ -37,7 +46,8 @@ const PRODUCT_VERSION = "0.1.0";
 export function App() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<PanelTab>("activity");
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const [notifications, setNotifications] =
+    useState<AgentNotification[]>(mockNotifications);
   const [connectedAccounts, setConnectedAccounts] = useState(
     initialConnectedAccounts,
   );
@@ -48,6 +58,20 @@ export function App() {
     initialDesktopPreferences,
   );
   const unreadCount = countUnread(notifications);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void loadNotifications().then((items) => {
+      if (!cancelled) {
+        setNotifications(items);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const changeExpandedState = useCallback(async (expanded: boolean) => {
     await setWidgetExpanded(expanded);
@@ -138,6 +162,33 @@ export function App() {
     });
   }
 
+  async function handleMarkRead(id: number) {
+    setNotifications((current) => markRead(current, id));
+    const remote = await markNotificationReadRemote(id);
+    if (remote) {
+      setNotifications(remote);
+    }
+  }
+
+  async function handleMarkAllRead() {
+    setNotifications(markAllRead);
+    const remote = await markAllNotificationsReadRemote();
+    if (remote) {
+      setNotifications(remote);
+    }
+  }
+
+  async function handleSaveReplyDraft(
+    id: number,
+    draft: Pick<ReplyDraft, "subject" | "draftBody">,
+  ) {
+    setNotifications((current) => updateReplyDraft(current, id, draft));
+    const remote = await saveReplyDraftRemote(id, draft);
+    if (remote) {
+      setNotifications(remote);
+    }
+  }
+
   if (isExpanded) {
     return (
       <AgentPanel
@@ -153,19 +204,12 @@ export function App() {
           setDesktopPreferences(next)
         }
         onDisconnectOutlook={handleDisconnectOutlook}
-        onMarkAllRead={() => setNotifications(markAllRead)}
-        onMarkRead={(id) =>
-          setNotifications((current) => markRead(current, id))
-        }
+        onMarkAllRead={() => void handleMarkAllRead()}
+        onMarkRead={(id) => void handleMarkRead(id)}
         onNotificationChange={(next: NotificationPreferences) =>
           setNotificationPreferences(next)
         }
-        onSaveReplyDraft={(
-          id,
-          draft: Pick<ReplyDraft, "subject" | "draftBody">,
-        ) =>
-          setNotifications((current) => updateReplyDraft(current, id, draft))
-        }
+        onSaveReplyDraft={(id, draft) => void handleSaveReplyDraft(id, draft)}
         onTabChange={setActiveTab}
         productVersion={PRODUCT_VERSION}
         unreadCount={unreadCount}
