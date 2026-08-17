@@ -37,3 +37,8 @@ curl -H "Authorization: Bearer dev-token" http://127.0.0.1:8741/v1/notifications
 
 The service binds only to loopback, requires the session token, and stores
 notifications in SQLite under `AGENTOS_DATA_DIR`.
+
+Realtime UI updates use `ws://127.0.0.1:<port>/v1/events?token=...`.
+
+Set `AGENTOS_SIMULATE_INTERVAL_SECONDS` (default `30`, `0` disables) to emit
+demo notifications while developing.

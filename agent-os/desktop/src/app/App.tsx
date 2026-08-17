@@ -31,6 +31,7 @@ import {
   markAllNotificationsReadRemote,
   markNotificationReadRemote,
   saveReplyDraftRemote,
+  subscribeToNotificationEvents,
 } from "../lib/api/notifications";
 import {
   onOpenSettingsRequest,
@@ -68,8 +69,17 @@ export function App() {
       }
     });
 
+    const unsubscribe = subscribeToNotificationEvents(() => {
+      void loadNotifications().then((items) => {
+        if (!cancelled) {
+          setNotifications(items);
+        }
+      });
+    });
+
     return () => {
       cancelled = true;
+      unsubscribe();
     };
   }, []);
 

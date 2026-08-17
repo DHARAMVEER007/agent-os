@@ -12,6 +12,7 @@ TOKEN = "test-session-token"
 def client(monkeypatch: pytest.MonkeyPatch, tmp_path):
     monkeypatch.setenv("AGENTOS_SESSION_TOKEN", TOKEN)
     monkeypatch.setenv("AGENTOS_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("AGENTOS_SIMULATE_INTERVAL_SECONDS", "0")
 
     from agentos.api.app import app
 
@@ -50,6 +51,7 @@ def test_health_fails_when_token_env_missing(
     tmp_path,
 ) -> None:
     monkeypatch.setenv("AGENTOS_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("AGENTOS_SIMULATE_INTERVAL_SECONDS", "0")
     monkeypatch.delenv("AGENTOS_SESSION_TOKEN", raising=False)
 
     from agentos.api.app import app
